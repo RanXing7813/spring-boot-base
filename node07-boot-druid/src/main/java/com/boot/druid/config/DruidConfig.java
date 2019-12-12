@@ -6,11 +6,13 @@ import com.alibaba.druid.support.http.WebStatFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -77,10 +79,14 @@ public class DruidConfig {
     @Value("{spring.datasource.druid.connection-properties}")
     private String connectionProperties;
 
+    
     /**
      * Druid 连接池配置
      */
-    @Bean     //声明其为Bean实例
+       //声明其为Bean实例
+    @Bean(name = "dataSource")
+    @Qualifier("dataSource")
+    @Primary
     public DruidDataSource dataSource() {
         DruidDataSource datasource = new DruidDataSource();
         datasource.setUrl(dbUrl);
@@ -111,8 +117,8 @@ public class DruidConfig {
     /**
      * JDBC操作配置
      */
-    @Bean(name = "dataOneTemplate")
-    public JdbcTemplate jdbcTemplate (@Autowired DruidDataSource dataSource){
+    @Bean(name = "primaryJdbcTemplate")
+    public JdbcTemplate primaryJdbcTemplate (@Autowired  @Qualifier("dataSource") DruidDataSource dataSource){
         return new JdbcTemplate(dataSource) ;
     }
 

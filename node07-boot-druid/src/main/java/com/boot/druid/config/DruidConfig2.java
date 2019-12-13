@@ -1,27 +1,21 @@
 package com.boot.druid.config;
 
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.support.http.StatViewServlet;
-import com.alibaba.druid.support.http.WebStatFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-
+import com.alibaba.druid.pool.DruidDataSource;
 /**
  * Druid数据库连接池配置文件
  */
 @Configuration
-public class DruidConfig {
-    private static final Logger logger = LoggerFactory.getLogger(DruidConfig.class);
-
+public class DruidConfig2 {
+	private static final Logger logger = LoggerFactory.getLogger(DruidConfig2.class);
+	
     @Value("${spring.datasource.druid.url}")
     private String dbUrl;
 
@@ -83,12 +77,11 @@ public class DruidConfig {
     /**
      * Druid 连接池配置
      */
-       //声明其为Bean实例
+         //声明其为Bean实例
     @Bean
-    @Primary
-    public DruidDataSource dataSource() {
+    public DruidDataSource dataSource2() {
         DruidDataSource datasource = new DruidDataSource();
-        datasource.setUrl(dbUrl);
+        datasource.setUrl("jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8");
         datasource.setUsername(username);
         datasource.setPassword(password);
         datasource.setDriverClassName(driverClassName);
@@ -111,40 +104,15 @@ public class DruidConfig {
             logger.error("druid configuration initialization filter", e);
         }
         datasource.setConnectionProperties(connectionProperties);
+        
         return datasource;
     }
+    
     /**
      * JDBC操作配置
      */
-    @Bean(name = "primaryJdbcTemplate")
-    public JdbcTemplate primaryJdbcTemplate (@Autowired  @Qualifier("dataSource") DruidDataSource dataSource){
-        return new JdbcTemplate(dataSource) ;
-    }
-
-    /**
-     * 配置 Druid 监控界面
-     */
-    @Bean
-    public ServletRegistrationBean statViewServlet(){
-        ServletRegistrationBean srb =
-                new ServletRegistrationBean(new StatViewServlet(),"/druid/*");
-        //设置控制台管理用户
-        //srb.addInitParameter("loginUsername","root");
-       // srb.addInitParameter("loginPassword","root");
-        //是否可以重置数据
-        srb.addInitParameter("resetEnable","false");
-        return srb;
-    }
-    @Bean
-    public FilterRegistrationBean statFilter(){
-        //创建过滤器
-        FilterRegistrationBean frb =
-                new FilterRegistrationBean(new WebStatFilter());
-        //设置过滤器过滤路径
-        frb.addUrlPatterns("/*");
-        //忽略过滤的形式
-        frb.addInitParameter("exclusions",
-                "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
-        return frb;
+    @Bean(name = "secondaryJdbcTemplate")
+    public JdbcTemplate secondaryJdbcTemplate (@Autowired   @Qualifier("dataSource2") DruidDataSource dataSource2){
+        return new JdbcTemplate(dataSource2) ;
     }
 }

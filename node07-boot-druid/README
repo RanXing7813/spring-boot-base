@@ -1,0 +1,20 @@
+项目说明
+多数据源的创建注意:
+
+	在使用相关类的时候必须制定 @Qualifier("dataSource")来区分bean
+	
+	/*** Druid 连接池配置 */
+    //声明其为Bean实例
+    @Bean
+    @Primary
+    public DruidDataSource dataSource() {}
+    
+    /**
+     * JDBC操作配置
+     */
+    @Bean(name = "primaryJdbcTemplate")
+    public JdbcTemplate primaryJdbcTemplate (@Autowired  @Qualifier("dataSource") DruidDataSource dataSource){
+        return new JdbcTemplate(dataSource) ;
+    }
+    
+    

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import javax.annotation.Resource;
 
 @RestController
 public class DruidController {
@@ -29,7 +28,7 @@ public class DruidController {
         sql = "SELECT COUNT(1) FROM sys_user" ;
         Integer countTwo = secondaryJdbcTemplate.queryForObject(sql,Integer.class) ;
         // countOne==2
-        LOG.info("countOne=="+countOne);
+        LOG.info("countOne=="+countTwo);
         return "success" ;
     }
 }

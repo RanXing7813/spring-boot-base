@@ -13,8 +13,8 @@ import com.alibaba.druid.pool.DruidDataSource;
  * Druid数据库连接池配置文件
  */
 @Configuration
-public class DruidConfig2 {
-	private static final Logger logger = LoggerFactory.getLogger(DruidConfig2.class);
+public class DruidTwoDataSourceConfig {
+	private static final Logger logger = LoggerFactory.getLogger(DruidTwoDataSourceConfig.class);
 	
     @Value("${spring.datasource.druid.url}")
     private String dbUrl;

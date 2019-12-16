@@ -30,6 +30,19 @@ spring:
       connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
       #filters: #配置多个英文逗号分隔(统计，sql注入，log4j过滤)
       filters: stat,wall
-      stat-view-servlet:
+      statViewServlet:
         enabled: true
+        allow: 
         url-pattern: /druid/*
+        login-username: admin
+        login-password: admin
+      filter:
+        stat:
+          enabled: true
+          # 慢SQL记录
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true

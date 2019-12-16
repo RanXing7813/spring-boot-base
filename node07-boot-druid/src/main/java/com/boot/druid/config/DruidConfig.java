@@ -1,6 +1,7 @@
 package com.boot.druid.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.spring.boot.autoconfigure.properties.DruidStatProperties;
 import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
 import org.slf4j.Logger;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -15,136 +17,89 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.io.IOException;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import com.alibaba.druid.util.Utils;
+
 /**
- * Druid数据库连接池配置文件
+ * Druid配置文件
  */
 @Configuration
 public class DruidConfig {
     private static final Logger logger = LoggerFactory.getLogger(DruidConfig.class);
+//    /**
+//     * 配置 Druid 监控界面
+//     */
+//    @Bean
+//    public ServletRegistrationBean statViewServlet(){
+//        ServletRegistrationBean srb =
+//                new ServletRegistrationBean(new StatViewServlet(),"/druid/*");
+//        //设置控制台管理用户
+//        //srb.addInitParameter("loginUsername","root");
+//       // srb.addInitParameter("loginPassword","root");
+//        //是否可以重置数据
+//        srb.addInitParameter("resetEnable","false");
+//        return srb;
+//    }
+//    @Bean
+//    public FilterRegistrationBean statFilter(){
+//        //创建过滤器
+//        FilterRegistrationBean frb =
+//                new FilterRegistrationBean(new WebStatFilter());
+//        //设置过滤器过滤路径
+//        frb.addUrlPatterns("/*");
+//        //忽略过滤的形式
+//        frb.addInitParameter("exclusions",
+//                "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
+//        return frb;
+//    }
+	/**
+	 * 去除监控页面底部的广告
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Bean
+	@ConditionalOnProperty(name = "spring.datasource.druid.statViewServlet.enabled", havingValue = "true")
+	public FilterRegistrationBean removeDruidFilterRegistrationBean(DruidStatProperties properties) {
+		// 获取web监控页面的参数
+		DruidStatProperties.StatViewServlet config = properties.getStatViewServlet();
+		// 提取common.js的配置路径
+		String pattern = config.getUrlPattern() != null ? config.getUrlPattern() : "/druid/*";
+		String commonJsPattern = pattern.replaceAll("\\*", "js/common.js");
+		final String filePath = "support/http/resources/js/common.js";
+		// 创建filter进行过滤
+		Filter filter = new Filter() {
+			@Override
+			public void init(javax.servlet.FilterConfig filterConfig) throws ServletException {
+			}
 
-    @Value("${spring.datasource.druid.url}")
-    private String dbUrl;
+			@Override
+			public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+					throws IOException, ServletException {
+				chain.doFilter(request, response);
+				// 重置缓冲区，响应头不会被重置
+				response.resetBuffer();
+				// 获取common.js
+				String text = Utils.readFromResource(filePath);
+				// 正则替换banner, 除去底部的广告信息
+				text = text.replaceAll("<a.*?banner\"></a><br/>", "");
+				text = text.replaceAll("powered.*?shrek.wang</a>", "");
+				response.getWriter().write(text);
+			}
 
-    @Value("${spring.datasource.druid.username}")
-    private String username;
-
-    @Value("${spring.datasource.druid.password}")
-    private String password;
-
-    @Value("${spring.datasource.druid.driverClassName}")
-    private String driverClassName;
-
-    @Value("${spring.datasource.druid.initial-size}")
-    private int initialSize;
-
-    @Value("${spring.datasource.druid.max-active}")
-    private int maxActive;
-
-    @Value("${spring.datasource.druid.min-idle}")
-    private int minIdle;
-
-    @Value("${spring.datasource.druid.max-wait}")
-    private int maxWait;
-
-    @Value("${spring.datasource.druid.pool-prepared-statements}")
-    private boolean poolPreparedStatements;
-
-    @Value("${spring.datasource.druid.max-pool-prepared-statement-per-connection-size}")
-    private int maxPoolPreparedStatementPerConnectionSize;
-
-    @Value("${spring.datasource.druid.time-between-eviction-runs-millis}")
-    private int timeBetweenEvictionRunsMillis;
-
-    @Value("${spring.datasource.druid.min-evictable-idle-time-millis}")
-    private int minEvictableIdleTimeMillis;
-
-    @Value("${spring.datasource.druid.max-evictable-idle-time-millis}")
-    private int maxEvictableIdleTimeMillis;
-
-    @Value("${spring.datasource.druid.validation-query}")
-    private String validationQuery;
-
-    @Value("${spring.datasource.druid.test-while-idle}")
-    private boolean testWhileIdle;
-
-    @Value("${spring.datasource.druid.test-on-borrow}")
-    private boolean testOnBorrow;
-
-    @Value("${spring.datasource.druid.test-on-return}")
-    private boolean testOnReturn;
-
-    @Value("${spring.datasource.druid.filters}")
-    private String filters;
-
-    @Value("{spring.datasource.druid.connection-properties}")
-    private String connectionProperties;
-
-    
-    /**
-     * Druid 连接池配置
-     */
-       //声明其为Bean实例
-    @Bean
-    @Primary
-    public DruidDataSource dataSource() {
-        DruidDataSource datasource = new DruidDataSource();
-        datasource.setUrl(dbUrl);
-        datasource.setUsername(username);
-        datasource.setPassword(password);
-        datasource.setDriverClassName(driverClassName);
-        datasource.setInitialSize(initialSize);
-        datasource.setMinIdle(minIdle);
-        datasource.setMaxActive(maxActive);
-        datasource.setMaxWait(maxWait);
-        datasource.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
-        datasource.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-        datasource.setMaxEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-        datasource.setValidationQuery(validationQuery);
-        datasource.setTestWhileIdle(testWhileIdle);
-        datasource.setTestOnBorrow(testOnBorrow);
-        datasource.setTestOnReturn(testOnReturn);
-        datasource.setPoolPreparedStatements(poolPreparedStatements);
-        datasource.setMaxPoolPreparedStatementPerConnectionSize(maxPoolPreparedStatementPerConnectionSize);
-        try {
-            datasource.setFilters(filters);
-        } catch (Exception e) {
-            logger.error("druid configuration initialization filter", e);
-        }
-        datasource.setConnectionProperties(connectionProperties);
-        return datasource;
-    }
-    /**
-     * JDBC操作配置
-     */
-    @Bean(name = "primaryJdbcTemplate")
-    public JdbcTemplate primaryJdbcTemplate (@Autowired  @Qualifier("dataSource") DruidDataSource dataSource){
-        return new JdbcTemplate(dataSource) ;
-    }
-
-    /**
-     * 配置 Druid 监控界面
-     */
-    @Bean
-    public ServletRegistrationBean statViewServlet(){
-        ServletRegistrationBean srb =
-                new ServletRegistrationBean(new StatViewServlet(),"/druid/*");
-        //设置控制台管理用户
-        //srb.addInitParameter("loginUsername","root");
-       // srb.addInitParameter("loginPassword","root");
-        //是否可以重置数据
-        srb.addInitParameter("resetEnable","false");
-        return srb;
-    }
-    @Bean
-    public FilterRegistrationBean statFilter(){
-        //创建过滤器
-        FilterRegistrationBean frb =
-                new FilterRegistrationBean(new WebStatFilter());
-        //设置过滤器过滤路径
-        frb.addUrlPatterns("/*");
-        //忽略过滤的形式
-        frb.addInitParameter("exclusions",
-                "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
-        return frb;
-    }
+			@Override
+			public void destroy() {
+			}
+		};
+		FilterRegistrationBean registrationBean = new FilterRegistrationBean();
+		registrationBean.setFilter(filter);
+		registrationBean.addUrlPatterns(commonJsPattern);
+		registrationBean.addInitParameter("exclusions", 
+				"*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
+		return registrationBean;
+	}
 }

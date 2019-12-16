@@ -1,0 +1,2 @@
+logging:
+  config: classpath:config/dev/log4j2/log4j2-boot-dev.xml

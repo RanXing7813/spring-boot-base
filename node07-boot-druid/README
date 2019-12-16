@@ -2,6 +2,7 @@
 多数据源的创建注意:
 
 	在使用相关类的时候必须制定 @Qualifier("dataSource")来区分bean
+	主数据源使用注解@Primary
 	
 	/*** Druid 连接池配置 */
     //声明其为Bean实例

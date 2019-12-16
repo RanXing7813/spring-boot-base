@@ -1,0 +1,16 @@
+项目说明
+	项目区分了多环境下配置文件的路径区分
+	application.yml中使用spring.profiles.active=dev来指定配置文件的区分
+	配置文件必须在classpath根目录下,或者config根目录下
+	
+	@Profile("dev") //开发环境的时候.
+	public class DevEmailServiceImpl implements EmailService {...}
+	可以通过注解来区分实现类在启动时候使用的类,方便开发和生产的测试
+	
+	 使用log4j2
+	  	注意事项: log4j使用的是properties,  log4j2使用的xml已经不支持properties了,后面会淘汰
+	  	相关jar文件需要排除冲突
+	  	https://www.cnblogs.com/keeya/p/10101547.html
+	  	http://www.leftso.com/blog/111.html
+  	
+  	
